@@ -69,11 +69,11 @@ def upsert_vectors(text_chunks):
 def main():
     load_dotenv()
     st.set_page_config(
-        page_title="Chat with multiple PDFs",
+        page_title="Knowledge Base Upload",
         page_icon=":books:"
     )
 
-    st.header("Chat with multiple PDFs :books:")
+    st.header("Upload Documents into Vector Database")
     
 
     with st.sidebar:
