@@ -5,6 +5,7 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 from langchain.vectorstores import Pinecone
+import docx2txt
 
 load_dotenv(find_dotenv(), override=True)
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
@@ -15,6 +16,18 @@ def get_pdf_text(pdf_docs):
         pdf_reader = PdfReader(pdf)
         for page in pdf_reader.pages:
             text += page.extract_text()
+    return text
+
+def get_word_text(word_docs):
+    text = ""
+    for doc in word_docs:
+        text += docx2txt.process(doc)
+    return text
+
+def get_txt_text(txt_docs):
+    text = ""
+    for txt in txt_docs:
+        text += txt.read().decode("utf-8") + "\n"
     return text
 
 def dynamic_chunk_size(document_length):
@@ -78,13 +91,23 @@ def main():
 
     with st.sidebar:
         st.subheader("Your documents")
-        pdf_docs = st.file_uploader(
+        files = st.file_uploader(
             "Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
         if st.button("Process"):
             with st.spinner("Processing"):
-                # get pdf text
-                raw_text = get_pdf_text(pdf_docs)
-                print(raw_text)
+                raw_text = ""
+                
+                pdf_docs = [file for file in files if file.type == "application/pdf"]
+                if pdf_docs:
+                    raw_text += get_pdf_text(pdf_docs)
+                
+                word_docs = [file for file in files if file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+                if word_docs:
+                    raw_text += get_word_text(word_docs)
+                
+                txt_docs = [file for file in files if file.type == "text/plain"]
+                if txt_docs:
+                    raw_text += get_txt_text(txt_docs)
 
                 # get the text chunks
                 text_chunks = get_text_chunks(raw_text)
