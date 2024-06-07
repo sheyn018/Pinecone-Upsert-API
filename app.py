@@ -83,42 +83,51 @@ def main():
     load_dotenv()
     st.set_page_config(
         page_title="Knowledge Base Upload",
-        page_icon=":books:"
+        page_icon=":books:",
+        layout="centered"
     )
 
     st.header("Upload Documents into Vector Database")
     
+    st.subheader("Upload your documents")
+    files = st.file_uploader(
+        "Upload PDF, Word, or TXT files",
+        type=["pdf", "docx", "txt"],
+        accept_multiple_files=True
+    )
+    
+    if st.button("Process"):
+        if not files:
+            st.warning("Please upload at least one document before processing.")
+            return
+        
+        with st.spinner("Processing documents..."):
+            raw_text = ""
+            
+            pdf_docs = [file for file in files if file.type == "application/pdf"]
+            if pdf_docs:
+                raw_text += get_pdf_text(pdf_docs)
+            
+            word_docs = [file for file in files if file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+            if word_docs:
+                raw_text += get_word_text(word_docs)
+            
+            txt_docs = [file for file in files if file.type == "text/plain"]
+            if txt_docs:
+                raw_text += get_txt_text(txt_docs)
 
-    with st.sidebar:
-        st.subheader("Your documents")
-        files = st.file_uploader(
-            "Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
-        if st.button("Process"):
-            with st.spinner("Processing"):
-                raw_text = ""
-                
-                pdf_docs = [file for file in files if file.type == "application/pdf"]
-                if pdf_docs:
-                    raw_text += get_pdf_text(pdf_docs)
-                
-                word_docs = [file for file in files if file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
-                if word_docs:
-                    raw_text += get_word_text(word_docs)
-                
-                txt_docs = [file for file in files if file.type == "text/plain"]
-                if txt_docs:
-                    raw_text += get_txt_text(txt_docs)
+            if not raw_text:
+                st.error("No text extracted from the uploaded documents. Please check the files and try again.")
+                return
 
-                # get the text chunks
-                text_chunks = get_text_chunks(raw_text)
-                print(len(text_chunks))
+            # get the text chunks
+            text_chunks = get_text_chunks(raw_text)
+            st.write(f"Number of text chunks: {len(text_chunks)}")
 
-                # create vector store
-                vectorstore = upsert_vectors(text_chunks)
+            # create vector store
+            upsert_vectors(text_chunks)
 
-                # # create conversation chain
-                # st.session_state.conversation = get_conversation_chain(vectorstore)
-
+            st.success("Documents processed and vectors upserted successfully!")
 
 if __name__ == '__main__':
     main()
