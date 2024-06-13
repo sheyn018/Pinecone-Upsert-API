@@ -6,6 +6,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 from langchain.vectorstores import Pinecone
 import docx2txt
+import streamlit.components.v1 as components
 
 load_dotenv(find_dotenv(), override=True)
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
@@ -77,7 +78,6 @@ def upsert_vectors(text_chunks):
         vectors=vectors,
         namespace="ns1"
     )
-    
 
 def main():
     load_dotenv()
@@ -128,6 +128,45 @@ def main():
             upsert_vectors(text_chunks)
 
             st.success("Documents processed and vectors upserted successfully!")
+    
+    st.subheader("Chatbot")
+    chatbot_html = """
+    <div class="chatbot-inner section-inner">
+        <div id="flat-chat"></div>
+        <style>
+            #flat-chat {
+                width: 100%;
+                height: 800px; /* Adjust the height as needed */
+                border: none;
+                overflow: hidden;
+            }
+        </style>
+        <script type="text/javascript">
+            (function(d, t) {
+                var v = d.createElement(t),
+                    s = d.getElementsByTagName(t)[0];
+                v.onload = function() {
+                    window.voiceflow.chat.load({
+                        verify: {
+                            projectID: ''
+                        }, // Replace with your Voiceflow project ID
+                        url: 'https://general-runtime.voiceflow.com',
+                        versionID: 'production',
+                        render: {
+                            mode: 'embedded',
+                            target: document.getElementById('flat-chat'),
+                        },
+                        autostart: false,
+                    });
+                }
+                v.src = "https://cdn.voiceflow.com/widget/bundle.mjs";
+                v.type = "text/javascript";
+                s.parentNode.insertBefore(v, s);
+            })(document, 'script');
+        </script>
+    </div>
+    """
+    components.html(chatbot_html, height=850)
 
 if __name__ == '__main__':
     main()
