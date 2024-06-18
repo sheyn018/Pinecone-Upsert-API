@@ -4,7 +4,6 @@ import os
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from sentence_transformers import SentenceTransformer
-from langchain.vectorstores import Pinecone
 import docx2txt
 import streamlit.components.v1 as components
 
