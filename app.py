@@ -10,6 +10,7 @@ import streamlit.components.v1 as components
 
 load_dotenv(find_dotenv(), override=True)
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
+project_id = os.getenv("PROJECT_ID")
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -84,21 +85,21 @@ def main():
     st.set_page_config(
         page_title="Knowledge Base Upload",
         page_icon=":books:",
-        layout="centered"
+        layout="wide"
     )
 
-    st.header("Upload Documents into Vector Database")
+    st.sidebar.header("Upload Documents into Vector Database")
     
-    st.subheader("Upload your documents")
-    files = st.file_uploader(
+    st.sidebar.subheader("Upload your documents")
+    files = st.sidebar.file_uploader(
         "Upload PDF, Word, or TXT files",
         type=["pdf", "docx", "txt"],
         accept_multiple_files=True
     )
     
-    if st.button("Process"):
+    if st.sidebar.button("Process"):
         if not files:
-            st.warning("Please upload at least one document before processing.")
+            st.sidebar.warning("Please upload at least one document before processing.")
             return
         
         with st.spinner("Processing documents..."):
@@ -117,19 +118,19 @@ def main():
                 raw_text += get_txt_text(txt_docs)
 
             if not raw_text:
-                st.error("No text extracted from the uploaded documents. Please check the files and try again.")
+                st.sidebar.error("No text extracted from the uploaded documents. Please check the files and try again.")
                 return
 
             # get the text chunks
             text_chunks = get_text_chunks(raw_text)
-            st.write(f"Number of text chunks: {len(text_chunks)}")
+            st.sidebar.write(f"Number of text chunks: {len(text_chunks)}")
 
             # create vector store
             upsert_vectors(text_chunks)
 
-            st.success("Documents processed and vectors upserted successfully!")
+            st.sidebar.success("Documents processed and vectors upserted successfully!")
     
-    st.subheader("Chatbot")
+    st.header("Chatbot")
     chatbot_html = """
     <div class="chatbot-inner section-inner">
         <div id="flat-chat"></div>
@@ -148,7 +149,7 @@ def main():
                 v.onload = function() {
                     window.voiceflow.chat.load({
                         verify: {
-                            projectID: ''
+                            projectID: '{project_id}'
                         }, // Replace with your Voiceflow project ID
                         url: 'https://general-runtime.voiceflow.com',
                         versionID: 'production',
