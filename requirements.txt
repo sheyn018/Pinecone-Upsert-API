@@ -3,5 +3,5 @@ python-dotenv
 PyPDF2
 langchain
 sentence-transformers
-pinecone-client
+pinecone
 docx2txt
