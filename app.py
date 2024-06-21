@@ -6,6 +6,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 import docx2txt
 import streamlit.components.v1 as components
+from pinecone import Pinecone
 
 load_dotenv(find_dotenv(), override=True)
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
@@ -50,8 +51,8 @@ def get_text_chunks(text):
     chunks = text_splitter.split_text(text)
     return chunks
 
-def upsert_vectors(text_chunks):
-    """Upsert vectors to Pinecone."""
+def upsert_vectors(text_chunks, namespace):
+    """Upsert vectors to Pinecone with a specified namespace."""
     # Load the sentence transformer model
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
     # Encode the text chunks to get embeddings
@@ -70,13 +71,12 @@ def upsert_vectors(text_chunks):
         }
         vectors.append(data)
 
-    from pinecone import Pinecone
     pc = Pinecone(api_key=pinecone_api_key)
     index = pc.Index("huggingface")
 
     index.upsert(
         vectors=vectors,
-        namespace="ns1"
+        namespace=namespace
     )
 
 def main():
@@ -96,9 +96,15 @@ def main():
         accept_multiple_files=True
     )
     
+    brand_name = st.sidebar.text_input("Enter the brand name")
+    
     if st.sidebar.button("Process"):
         if not files:
             st.sidebar.warning("Please upload at least one document before processing.")
+            return
+        
+        if not brand_name:
+            st.sidebar.warning("Please enter a brand name before processing.")
             return
         
         with st.spinner("Processing documents..."):
@@ -124,8 +130,9 @@ def main():
             text_chunks = get_text_chunks(raw_text)
             st.sidebar.write(f"Number of text chunks: {len(text_chunks)}")
 
-            # create vector store
-            upsert_vectors(text_chunks)
+            # create vector store with namespace
+            namespace = f"{brand_name}-namespace"
+            upsert_vectors(text_chunks, namespace)
 
             st.sidebar.success("Documents processed and vectors upserted successfully!")
     
