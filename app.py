@@ -51,8 +51,8 @@ def get_text_chunks(text):
     chunks = text_splitter.split_text(text)
     return chunks
 
-def upsert_vectors(text_chunks, namespace):
-    """Upsert vectors to Pinecone with a specified namespace."""
+def upsert_vectors(text_chunks, namespaces):
+    """Upsert vectors to Pinecone with specified namespaces."""
     # Load the sentence transformer model
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
     # Encode the text chunks to get embeddings
@@ -74,10 +74,11 @@ def upsert_vectors(text_chunks, namespace):
     pc = Pinecone(api_key=pinecone_api_key)
     index = pc.Index("huggingface")
 
-    index.upsert(
-        vectors=vectors,
-        namespace=namespace
-    )
+    for namespace in namespaces:
+        index.upsert(
+            vectors=vectors,
+            namespace=namespace
+        )
 
 def main():
     load_dotenv()
@@ -130,9 +131,9 @@ def main():
             text_chunks = get_text_chunks(raw_text)
             st.sidebar.write(f"Number of text chunks: {len(text_chunks)}")
 
-            # create vector store with namespace
-            namespace = f"{brand_name}-namespace"
-            upsert_vectors(text_chunks, namespace)
+            # create vector store with namespaces
+            namespaces = [f"{brand_name}-namespace", "default"]
+            upsert_vectors(text_chunks, namespaces)
 
             st.sidebar.success("Documents processed and vectors upserted successfully!")
     
